@@ -1,6 +1,6 @@
-# <Mettre ici le nom de votre jeu>
+# AsciiGuessr
 
-Développé par <Karim AOULAD-TAYAB> <Nassim BOUKEBOUT>
+Développé par Karim AOULAD-TAYAB, Nassim BOUKEBOUT
 Contacts : <karim.aouladtayab.etu@univ-lille.fr> , <nassim.boukebout@univ-lille.fr>
 
 ## Présentation de AsciiGuessr
