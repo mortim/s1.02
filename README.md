@@ -1,14 +1,13 @@
 # <Mettre ici le nom de votre jeu>
 
-Développé par <prénom1 nom1> <prénom2 nom2>
-Contacts : <mail1> , <mail2>
+Développé par <Karim AOULAD-TAYAB> <Nassim BOUKEBOUT>
+Contacts : <karim.aouladtayab.etu@univ-lille.fr> , <nassim.boukebout@univ-lille.fr>
 
-## Présentation de <le nom de votre jeu>
+## Présentation de AsciiGuessr
 
 Des captures d'écran illustrant le fonctionnement du logiciel sont proposées dans le répertoire shots.
 
-
-## Utilisation de <le nom de votre jeu>
+## Utilisation de AsciiGuessr
 
 Afin d'utiliser le projet, il suffit de taper les commandes suivantes dans un terminal :
 
