@@ -1,0 +1,13 @@
+1 : Bolivie
+2 : Venezuela
+3 : Groenland
+4 : Equateur
+5 : Paraguay
+6 : Uruguay
+7 : Colombie
+8 : Pérou
+9 : Argentine
+10 : Canada
+11 : Mexique
+12 : Brésil
+13 : Etats-Unis

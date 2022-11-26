@@ -1,0 +1,29 @@
+1 : Algérie
+2 : Madagascar
+3 : Ghana
+4 : Cameroun
+5 : Ouganda
+6 : Somalie
+7 : Burkina
+8 : Côte d'ivoire
+9 : Sénégal
+10 : Ethiopie
+11 : Angola
+12 : Maroc
+13 : Soudan
+14 : Afrique du Sud
+15 : Zambie
+16 : Tchad
+17 : Tanzanie
+18 : Egypte
+19 : Niger
+20 : Mauritanie
+21 : Congo-Kinshasa
+22 : Nambie
+23 : Libye
+24 : Nigeria
+25 : Centrafrique
+26 : Zimbabwe
+27 : Mali
+28 : Botswana
+29 : Kenya

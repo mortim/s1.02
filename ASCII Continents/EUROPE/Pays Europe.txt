@@ -1,0 +1,23 @@
+1 : France
+2 : Pologne
+3 : République Chèque
+4 : Portugal
+5 : Italie
+6 : Suisse
+7 : Ukraine
+8 : Turquie
+9 : Espagne
+10 : Allemagne
+11 : Biélorussie
+12 : Norvège
+13 : Islande
+14 : Roumanie
+15 : Suède
+16 : Russie
+17 : Bulgarie
+18 : Hongrie
+19 : Finlande
+20 : Royaume-Uni
+21 : Autriche
+22 : Grèce
+23 : Irlande

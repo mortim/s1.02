@@ -1,0 +1,20 @@
+1 : Pakistan
+2 : Yémén
+3 : Irak
+4 : Turkménistan
+5 : Japon 
+6 : Irak
+7 : Oman
+8 : Afghanistan
+9 : Népal
+10 : Mongolie
+11 : Arabie Saoudite
+12 : Turquie
+13 : Inde
+14 : Russie
+15 : Iran
+16 : Kazakhstan
+17 : Chine
+18 : Kirghizistan
+19 : Ouzbékistan
+
