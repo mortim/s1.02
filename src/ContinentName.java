@@ -1,6 +1,6 @@
 enum ContinentName {
     EUROPE,
-    AFRIQUE,
-    ASIE,
-    AMERIQUE
+    AFRICA,
+    ASIA,
+    AMERICA
 }
