@@ -1,12 +1,12 @@
 import extensions.File;
+import extensions.CSVFile;
 
 class AsciiGuessr extends Program {
-    // Constantes globales
+    // Constantes/Variables globales
     String RESSOURCES_PATH = "../ressources/";
     String PROMPT = "> ";
-    String NICKNAME = "";
-    String ANSI_END  = "\033[0m";
 
+    // --------------------------------------
     // Fonctions utiles
     String getFileContent(String filepath) {
         String output = "";
@@ -16,13 +16,13 @@ class AsciiGuessr extends Program {
         return output;
     }
 
-    int readChoice(int nbChoice) {
+    int readChoice(int nbChoice, Player player) {
         char choice = '1';
         String input;
         boolean goodChoice = false;
 
         while(!goodChoice) {
-            print(NICKNAME + PROMPT);
+            print(player.name + PROMPT);
             input = readString();
     
             if(!equals(input, "")) {
@@ -37,13 +37,60 @@ class AsciiGuessr extends Program {
         return (choice - '0');
     }
 
-    void refreshScreenCoords(int x, int y) {
+    void refreshScreenWithCoords(int x, int y) {
         cursor(x,y);
         clearScreen();
     }
 
+    // --------------------------------------
+    // Fonctions pour les fichiers CSV
+    String[] loadCountries(ContinentName name) {
+        CSVFile countries = loadCSV(RESSOURCES_PATH + "csv/Pays.csv");
+        int lig = rowCount(countries);
+        int col = columnCount(countries);
+        String[] tmp_result = new String[lig];
+        String[] result;
+        int k = 0;
+        for(int i = 0; i < lig; i++) {
+            for(int j = 0; j < col; j++) {
+                if(equals(getCell(countries, i, j), toString(name))) {
+                    tmp_result[k] = getCell(countries, i, j+1);
+                    k++;
+                }
+            }
+        }
+        result = new String[k];
+        for(int i = 0; i < k; i++) {
+            result[i] = tmp_result[i];
+        }
+        return result;
+    }
+
+    boolean savePlayer(Player player) {
+        CSVFile playersCSV = loadCSV(RESSOURCES_PATH + "csv/Joueurs.csv");
+        int lig = rowCount(playersCSV)+1;
+        int col = columnCount(playersCSV);
+        String[][] players = new String[lig][col];
+
+        for(int i = 0; i < lig-1; i++) {
+            for(int j = 0; j < col; j++) {
+                if(equals(getCell(playersCSV, i, j), player.name)) {
+                    return true;
+                } else {
+                    players[i][j] = getCell(playersCSV, i, j);
+                }
+            }
+        }
+        players[lig-1][0] = player.name;
+        players[lig-1][1] = "" + player.pts;
+        players[lig-1][2] = "" + player.intro;
+        saveCSV(players, RESSOURCES_PATH + "csv/Joueurs.csv");
+        return false;
+    }
+
+    // --------------------------------------
     // Fonctions pour les enumérations
-    String toStringEnum(ContinentName name) {
+    String toString(ContinentName name) {
         if(name == ContinentName.EUROPE)
             return "Europe";
         else if(name == ContinentName.AFRICA)
@@ -51,103 +98,124 @@ class AsciiGuessr extends Program {
         else if(name == ContinentName.ASIA)
             return "Asie";
         else
-            return "Amerique";
+            return "Amérique";
     }
 
-    // Fonctions pour la classe 'Level'
-    Level newLevel(int choice) {
-        Level level = new Level();
-        if(choice == 1) {
-            level.name = LevelName.SIMPLE;
-            level.time = 12;
-        }
-        if(choice == 2) {
-            level.name = LevelName.MEDIUM;
-            level.time = 7;
-        } 
-        if(choice == 3) {
-            level.name = LevelName.HARD;
-            level.time = 5;
-        }
-        return level;
-    }
-
+    // --------------------------------------
     // Fonctions pour la classe 'Continent'
     Continent newContinent(int choice) {
         Continent continent = new Continent();
-        if(choice == 1)
+        if(choice == 1) {
             continent.name = ContinentName.EUROPE;
-        if(choice == 2)
+        } else if(choice == 2) {
             continent.name = ContinentName.AFRICA;
-        if(choice == 3)
+        } else if(choice == 3) {
             continent.name = ContinentName.AMERICA;
-        if(choice == 4)
+        } else if(choice == 4) {
             continent.name = ContinentName.ASIA;
-        continent.ascii = getFileContent(RESSOURCES_PATH + toStringEnum(continent.name) + ".txt");
+        }
+        continent.countries = loadCountries(continent.name);
+        continent.ascii = getFileContent(RESSOURCES_PATH + "ascii/" + toString(continent.name) + ".txt");
         return continent;
     }
 
-    String toStringContinent(Continent continent) {
-        return toStringEnum(continent.name) + "\n\n" + continent.ascii;
+    String toString(Continent continent) {
+        return toString(continent.name) + "\n\n" + continent.ascii;
     }
 
-    // Fonctions d'affichage
-    String updateTimer(int min, int sec) {
-        if(min < 10 && sec < 10)
-            return ("0" + min) + ":" + ("0" + sec);
-        else if(min < 10)
-            return ("0" + min) + ":" + sec;
-        else if(sec < 10)
-            return min + ":" + ("0" + sec);
-        else
-            return min + ":" + sec;
+    // --------------------------------------
+    // Fonctions pour la classe 'Player'
+    Player newPlayer(String nickname) {
+        Player player = new Player();
+        player.name = nickname;
+        player.pts = 0;
+        player.intro = false;
+        return player;
     }
 
-    void startGameSession(Continent continent, Level level) {
-        String timer = "";
-        for(int min = level.time-1; min >= 0; min--) {
-            for(int sec = 59; sec >= 0; sec--) {
-                cursor(2,50);
-                println(ANSI_BLUE + toStringContinent(continent) + ANSI_END);
-                print(updateTimer(min,sec));
-                delay(1000);
-                clearScreen();
-            }
-        }
+    String toString(Player player) {
+        return player.name + " - " + player.pts + "pts\n";
     }
-    
+
+    // --------------------------------------
+    // Fonctions d'affichage / saisie
+    int gameModeMenu(Player player) {
+        refreshScreenWithCoords(1,1);
+        println("(1) Mode solo\n(2) Mode 1v1\n(3) Consulter ses records\n(4) Quitter\n");
+        return readChoice(4, player);
+    }
+
+    int continentsMenu(Player player) {
+        refreshScreenWithCoords(1,1);
+        println("Choisissez un continent: \n\n(1) Europe\n(2) Afrique\n(3) Amérique\n(4) Asie\n(5) Revenir en arrière\n");
+        return readChoice(5, player);
+    }
+
+    String getNickname() {
+        String nickname;
+        do {
+            print(PROMPT);
+            nickname = readString();
+        } while(equals(nickname, ""));
+        return nickname;
+    }
+
+    // --------------------------------------
     // Fonctions de test
     // ...
 
+    // --------------------------------------
     // Fonction principale
     void algorithm() {
         int choice;
-        Level level;
+        boolean trouve = false;
+        boolean badNickname;
         Continent continent;
- 
+        Player player;
+
         println("Bienvenue dans AsciiGuessr ! Le jeu qui va vous faire aimer la géographie.");
         println("Si vous vous sentez prêt à tenter votre chance, entrez votre pseudo: \n");
         
         do {
-            print(PROMPT);
-            NICKNAME = readString();
-        } while(equals(NICKNAME, ""));
+            player = newPlayer(getNickname());
+            badNickname = savePlayer(player);
+            if(badNickname) {
+                println("Cet utilisateur existe déjà !");
+            }
+        } while(badNickname);
+       
+        while(!trouve) {
+            choice = gameModeMenu(player);
+            if(choice == 1) {
+                choice = continentsMenu(player);
+                if(choice != 5) {
 
-        refreshScreenCoords(1,1);
-        println("(1) Mode solo\n(2) Mode 1v1\n(3) Consulter ses records\n");
-        choice = readChoice(3);
+                    continent = newContinent(choice);
+                    cursor(2,75);
+                    print("0/"+length(continent.countries) + " pays trouvés");
+                    cursor(2,100);
+                    print("0pts");
+                    cursor(2,50);
+                    println(ANSI_BLUE + toString(continent) + ANSI_RESET);
+                    for(int i = 0; i < 20; i++) {
 
-        if(choice == 1) {
-            refreshScreenCoords(1,1);
-            println("Niveau de difficulté: \n\n(1) Simple (12 min)\n(2) Moyen (7 min)\n(3) Difficle (5 min)\n");
-            level = newLevel(readChoice(3));
+                    }
+                    print("Choisissez un pays: ");
+                    choice = readInt();
 
-            refreshScreenCoords(1,1);
-            println("Choisissez un continent: \n\n(1) Europe\n(2) Afrique\n(3) Amérique\n(4) Asie\n");
-            continent = newContinent(readChoice(4));
-
-            startGameSession(continent, level);
+                }
+            } else if(choice == 2) {
+                
+            } else if(choice == 3) {
+        
+            } else {
+                trouve = true;
+            }
         }
     }
+
+    // - Implémententation la commande 'quitter' & 'revenir en arrière'   
+    // - Enregistrement des pseudos dans le csv (gestion de la redondance)
+    // - Factorisation du void algorithm()
 
 }

@@ -1,4 +1,5 @@
 class Continent {
     ContinentName name;
-    String ascii;   
+    String[] countries;
+    String ascii;
 }
