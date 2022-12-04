@@ -66,26 +66,51 @@ class AsciiGuessr extends Program {
         return result;
     }
 
-    boolean savePlayer(Player player) {
+    int search(Player player) {
         CSVFile playersCSV = loadCSV(RESSOURCES_PATH + "csv/Joueurs.csv");
-        int lig = rowCount(playersCSV)+1;
+        int lig = rowCount(playersCSV);
         int col = columnCount(playersCSV);
-        String[][] players = new String[lig][col];
-
-        for(int i = 0; i < lig-1; i++) {
-            for(int j = 0; j < col; j++) {
-                if(equals(getCell(playersCSV, i, j), player.name)) {
-                    return true;
-                } else {
-                    players[i][j] = getCell(playersCSV, i, j);
-                }
+        for(int i = 1; i < lig; i++) {
+            if(equals(getCell(playersCSV, i, 0), player.name)) {
+                return i;
             }
         }
-        players[lig-1][0] = player.name;
-        players[lig-1][1] = "" + player.pts;
-        players[lig-1][2] = "" + player.intro;
+        return -1;
+    }
+
+    boolean save(Player player) {
+        CSVFile playersCSV = loadCSV(RESSOURCES_PATH + "csv/Joueurs.csv");
+        String[][] players;
+        int lig, col;
+        int additionalCell = 0;
+        int pos = search(player);
+        boolean existNickname = true;
+
+        if(pos == -1) {
+            additionalCell++;
+            existNickname = false;
+        }
+        
+        lig = rowCount(playersCSV) + additionalCell;
+        col = columnCount(playersCSV);
+        players = new String[lig][col];
+
+        if(pos == -1) {
+            pos = lig-1;
+        }
+
+        for(int i = 0; i < lig-additionalCell; i++) {
+            for(int j = 0; j < col; j++) {
+                players[i][j] = getCell(playersCSV, i, j);
+            }
+        }
+
+        players[pos][0] = player.name;
+        players[pos][1] = "" + player.pts;
+        players[pos][2] = "" + player.intro;
+  
         saveCSV(players, RESSOURCES_PATH + "csv/Joueurs.csv");
-        return false;
+        return existNickname;
     }
 
     // --------------------------------------
@@ -160,6 +185,20 @@ class AsciiGuessr extends Program {
         return nickname;
     }
 
+    void startGame(Continent continent, Player player) {
+        cursor(2,75);
+        print("0/"+length(continent.countries) + " pays trouvés");
+        cursor(2,100);
+        print("0pts");
+        cursor(2,50);
+        println(ANSI_BLUE + toString(continent) + ANSI_RESET);
+        for(int i = 0; i < 20; i++) {
+
+        }
+        print("Choisissez un pays: ");
+        readInt();
+    }
+
     // --------------------------------------
     // Fonctions de test
     // ...
@@ -169,40 +208,28 @@ class AsciiGuessr extends Program {
     void algorithm() {
         int choice;
         boolean trouve = false;
-        boolean badNickname;
+        boolean existNickname;
         Continent continent;
         Player player;
 
         println("Bienvenue dans AsciiGuessr ! Le jeu qui va vous faire aimer la géographie.");
         println("Si vous vous sentez prêt à tenter votre chance, entrez votre pseudo: \n");
         
-        do {
-            player = newPlayer(getNickname());
-            badNickname = savePlayer(player);
-            if(badNickname) {
-                println("Cet utilisateur existe déjà !");
-            }
-        } while(badNickname);
-       
+        player = newPlayer(getNickname());
+        existNickname = save(player);
+
+        if(!existNickname) {
+            println("Vous venez de créer un nouveau compte...");
+            delay(1000);
+        }
+
         while(!trouve) {
             choice = gameModeMenu(player);
             if(choice == 1) {
                 choice = continentsMenu(player);
                 if(choice != 5) {
-
                     continent = newContinent(choice);
-                    cursor(2,75);
-                    print("0/"+length(continent.countries) + " pays trouvés");
-                    cursor(2,100);
-                    print("0pts");
-                    cursor(2,50);
-                    println(ANSI_BLUE + toString(continent) + ANSI_RESET);
-                    for(int i = 0; i < 20; i++) {
-
-                    }
-                    print("Choisissez un pays: ");
-                    choice = readInt();
-
+                    startGame(continent, player);
                 }
             } else if(choice == 2) {
                 
@@ -213,9 +240,5 @@ class AsciiGuessr extends Program {
             }
         }
     }
-
-    // - Implémententation la commande 'quitter' & 'revenir en arrière'   
-    // - Enregistrement des pseudos dans le csv (gestion de la redondance)
-    // - Factorisation du void algorithm()
 
 }
