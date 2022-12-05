@@ -16,12 +16,13 @@ class AsciiGuessr extends Program {
         return output;
     }
 
-    int readChoice(int nbChoice, Player player) {
+    int readChoice(String msg, int nbChoice, Player player) {
         char choice = '1';
         String input;
         boolean goodChoice = false;
 
         while(!goodChoice) {
+            println(msg);
             print(player.name + PROMPT);
             input = readString();
     
@@ -29,10 +30,15 @@ class AsciiGuessr extends Program {
                 choice = charAt(input, 0);
                 if(choice >= '1' && choice <= ('0' + nbChoice))
                     goodChoice = true;
-                else
+                else {
                     println("La saisie est incorrecte.");
-            } else
+                    delay(500);
+                }
+            } else {
                 println("Vous n'avez pas entré de saisie utilisateur.");
+                delay(500);
+            }
+            refreshScreenWithCoords(1,1);
         }
         return (choice - '0');
     }
@@ -76,6 +82,18 @@ class AsciiGuessr extends Program {
             }
         }
         return -1;
+    }
+
+    String search(Continent continent, int num) {
+        CSVFile countries = loadCSV(RESSOURCES_PATH + "csv/Pays.csv");
+        int lig = rowCount(countries);
+        int col = columnCount(countries);
+        for(int i = 1; i < lig; i++) {
+            if(equals(getCell(countries, i, 0),toString(continent.name)) && equals(getCell(countries, i, 2), ""+num)) {
+                return getCell(countries, i, 1);
+            }
+        }
+        return "";
     }
 
     boolean save(Player player) {
@@ -166,14 +184,14 @@ class AsciiGuessr extends Program {
     // Fonctions d'affichage / saisie
     int gameModeMenu(Player player) {
         refreshScreenWithCoords(1,1);
-        println("(1) Mode solo\n(2) Mode 1v1\n(3) Consulter ses records\n(4) Quitter\n");
-        return readChoice(4, player);
+        String msg = "(1) Mode solo\n(2) Mode 1v1\n(3) Consulter ses records\n(4) Quitter\n";
+        return readChoice(msg, 4, player);
     }
 
     int continentsMenu(Player player) {
         refreshScreenWithCoords(1,1);
-        println("Choisissez un continent: \n\n(1) Europe\n(2) Afrique\n(3) Amérique\n(4) Asie\n(5) Revenir en arrière\n");
-        return readChoice(5, player);
+        String msg = "Choisissez un continent: \n\n(1) Europe\n(2) Afrique\n(3) Amérique\n(4) Asie\n(5) Revenir en arrière\n";
+        return readChoice(msg, 5, player);
     }
 
     String getNickname() {
@@ -185,18 +203,31 @@ class AsciiGuessr extends Program {
         return nickname;
     }
 
-    void startGame(Continent continent, Player player) {
-        cursor(2,75);
-        print("0/"+length(continent.countries) + " pays trouvés");
-        cursor(2,100);
-        print("0pts");
-        cursor(2,50);
-        println(ANSI_BLUE + toString(continent) + ANSI_RESET);
-        for(int i = 0; i < 20; i++) {
+    String map(Continent continent, int pts, int foundCountries, int nbCountries) {
+        String mapStr = "\n";
+        mapStr = "      " + foundCountries + "/" + nbCountries + " pays trouvés |  ";
+        mapStr += pts + " pts";
+        mapStr += "                             " + ANSI_BLUE + toString(continent) + ANSI_RESET;
+        return mapStr;
+    }
 
+    void startGame(Continent continent, Player player) {
+        String msg = "";
+        int alea;
+        int nbCountries = length(continent.countries);
+        int country;
+        int pts = 0;
+        int foundCountries = 0;
+
+        for(int i = 0; i < 10; i++) {
+            msg = map(continent, pts, foundCountries, nbCountries);
+            alea = (int)(random()*nbCountries);
+            msg += "\nOù se trouve ce pays: " + search(continent, alea);
+            country = readChoice(msg, nbCountries, player);
+            if(country == alea) {
+                foundCountries++;
+            }
         }
-        print("Choisissez un pays: ");
-        readInt();
     }
 
     // --------------------------------------
