@@ -12,8 +12,14 @@ Des captures d'écran illustrant le fonctionnement du logiciel sont proposées d
 
 Afin d'utiliser le projet, il suffit de taper les commandes suivantes dans un terminal :
 
-./compile.sh
-//compilation des fichiers présents dans 'src' et création des fichiers '.class' dans 'classes'
+**compilation des fichiers présents dans 'src' et création des fichiers '.class' dans 'classes'**
 
-./run.sh <mettre ici le nom de votre classe (programme) principal>
-//lancement du jeu
+```
+./compile.sh
+```
+
+**Lancement du jeu**
+
+```
+./run.sh AsciiGuessr
+```
