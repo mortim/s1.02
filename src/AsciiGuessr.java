@@ -26,6 +26,17 @@ class AsciiGuessr extends Program {
         return true;
     }
 
+    int getContinentIndex(ContinentName name) {
+        if(name == ContinentName.AFRICA)
+            return 0;
+        else if(name == ContinentName.EUROPE)
+            return 1;
+        else if(name == ContinentName.ASIA)
+            return 2;
+        else
+            return 3;
+    }
+
     int readChoice(String msg, int nbChoice, Player player) {
         int choice = 1;
         String input = "";
@@ -58,11 +69,20 @@ class AsciiGuessr extends Program {
         return choice;
     }
 
+    int update(String gotPts, int pts) {
+        if(equals(gotPts,"1"))
+            return pts+10;
+        else if(equals(gotPts,"2"))
+            return pts+100;
+        else
+            return pts+1000;
+    }
+
     void refreshScreenWithCoords(int x, int y) {
         cursor(x,y);
         clearScreen();
     }
-
+    
     // --------------------------------------
     // Fonctions pour les fichiers CSV
     int countCountries(ContinentName name) {
@@ -145,20 +165,13 @@ class AsciiGuessr extends Program {
         }
 
         players[pos][0] = player.name;
-        players[pos][1] = "" + player.pts;
-        players[pos][2] = "" + player.intro;
+        for(int i = 1; i <= 4; i++) {
+            players[pos][i] = "" + player.pts[i-1];
+        }
+        players[pos][5] = "" + player.intro;
   
         saveCSV(players, RESSOURCES_PATH + "csv/Joueurs.csv");
         return existNickname;
-    }
-
-    int update(String gotPts, int pts) {
-        if(equals(gotPts,"1"))
-            return pts+10;
-        else if(equals(gotPts,"2"))
-            return pts+100;
-        else
-            return pts+1000;
     }
 
     // --------------------------------------
@@ -203,20 +216,32 @@ class AsciiGuessr extends Program {
     Player newPlayer(String nickname) {
         Player player = new Player();
         player.name = nickname;
-        player.pts = 0;
+        player.pts = new int[]{0,0,0,0};
         player.intro = false;
         return player;
     }
 
+    void setPlayerPts(Player player, int idxContinent, int pts) {
+        if(pts > player.pts[idxContinent]) {
+            player.pts[idxContinent] = pts;
+        }
+    }
+
     String toString(Player player) {
-        return player.name + " - " + player.pts + "pts\n";
+        int sizePts = length(player.pts);
+        String[] countries_match = new String[]{"Afrique", "Europe", "Amérique", "Asie"};
+        String profile = player.name + " => ";
+        for(int i = 0; i < sizePts; i++) {
+            profile += countries_match[i] + " " + ANSI_BLUE + player.pts[i] + "pts" + ANSI_RESET + " | ";
+        }
+        return profile;
     }
 
     // --------------------------------------
     // Fonctions d'affichage / saisie
     int gameModeMenu(Player player) {
         refreshScreenWithCoords(1,1);
-        String msg = "Votre score actuel: " + toString(player) + "---\n(1) Mode solo\n(2) Mode 1v1\n(3) Consulter ses records\n(4) Quitter\n";
+        String msg = "Votre score actuel: " + toString(player) + "\n(1) Mode solo\n(2) Mode 1v1\n(3) Consulter ses records\n(4) Quitter\n";
         return readChoice(msg, 4, player);
     }
 
@@ -246,21 +271,25 @@ class AsciiGuessr extends Program {
             save(player);
         } else {
             players = loadPlayers();
-            player.pts = stringToInt(players[ligPlayer][1]);
-            player.intro = players[ligPlayer][2] == "true";
+            for(int i = 0; i < 4; i++) {
+                player.pts[i] = stringToInt(players[ligPlayer][i+1]);
+            }
+            player.intro = players[ligPlayer][5] == "true";
         }
     }
 
     void startGame(Continent continent, Player player) {
         String[] countryRandomly;
         String msg = "";
+        String msgChoiceCountry = "";
+        int ptsBase = 0;
         int alea;
         int country;
         int pts = 0;
         int foundCountries = 0;
 
         for(int i = 0; i < 10; i++) {
-            msg = toString(continent, pts, foundCountries, continent.nbCountries);
+            msg = toString(continent, pts, foundCountries, continent.nbCountries) + "\n" + msgChoiceCountry;
             alea = (int)(random()*continent.nbCountries)+1;
             countryRandomly = search(continent, alea);
             msg += "\nOù se trouve ce pays: " + countryRandomly[0];
@@ -268,13 +297,15 @@ class AsciiGuessr extends Program {
             
             if(country == alea) {
                 foundCountries++;
+                ptsBase = pts;
                 pts = update(countryRandomly[1], pts);
+                msgChoiceCountry = ANSI_GREEN + "Correct ! (+" + (pts-ptsBase) + "pts)" + ANSI_RESET;
+            } else {
+                msgChoiceCountry = ANSI_RED + "Incorrect ! (+" + (pts-ptsBase) + "pts)" + ANSI_RESET;
             }
         }
-        if(pts > player.pts) {
-            player.pts = pts;
-            save(player);
-        }
+        setPlayerPts(player, getContinentIndex(continent.name), pts);
+        save(player);
     }
 
     // --------------------------------------
@@ -316,7 +347,7 @@ class AsciiGuessr extends Program {
 }
 
 // // TODO
-// - Afficher les nbr de pts gagnés à chaque pays trouvé (10,100,1000)
+// X - Afficher les nbr de pts gagnés à chaque pays trouvé (10,100,1000)
 // - Eviter de tirer 2 fois le même pays
 // - Mode histoire (Introduction du mode solo pour un nouveau joueur avec une histoire en parcourant chaque continent puis les autres fois le joueur aura le choix du continent)
 // - Mode 1v1 (Même principe que le mode solo pour les pts mais sur 2 continents aléatoires)

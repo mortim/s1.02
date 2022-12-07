@@ -1,5 +1,5 @@
 class Player {
     String name;
-    int pts;
+    int[] pts;
     boolean intro;
 }

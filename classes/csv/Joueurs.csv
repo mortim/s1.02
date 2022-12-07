@@ -1,2 +1,2 @@
-nom_joueur,points,intro_valide
-karim,3140,false
+nom_joueur,points_afrique,points_europe,points_amerique,points_asie,intro_valide
+karim,3340,0,1020,2150,false
