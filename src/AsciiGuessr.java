@@ -78,6 +78,16 @@ class AsciiGuessr extends Program {
             return pts+1000;
     }
 
+    boolean isInArray(int n, int[] tab) {
+        int sizeTab = length(tab);
+        for(int i = 0; i < sizeTab; i++) {
+            if(tab[i] == n) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     void refreshScreenWithCoords(int x, int y) {
         cursor(x,y);
         clearScreen();
@@ -278,6 +288,22 @@ class AsciiGuessr extends Program {
         }
     }
 
+    int drawACountry(int nbCountries, int[] drawnCountries, int actualIdx) {
+        int alea = -1;
+        boolean termine = false;
+        int i = actualIdx;
+        // Reprendre au dernier indice du tableau
+        while(!termine) {
+            alea = (int)(random()*nbCountries)+1;
+            if(!isInArray(alea,drawnCountries)) {
+                drawnCountries[i] = alea;
+                i++;
+                termine = true;
+            }
+        }
+        return alea;
+    }
+
     void startGame(Continent continent, Player player) {
         String[] countryRandomly;
         String msg = "";
@@ -287,10 +313,13 @@ class AsciiGuessr extends Program {
         int country;
         int pts = 0;
         int foundCountries = 0;
+        int[] drawnCountries = new int[continent.nbCountries];
+        int actualIdx = 0;
 
         for(int i = 0; i < 10; i++) {
             msg = toString(continent, pts, foundCountries, continent.nbCountries) + "\n" + msgChoiceCountry;
-            alea = (int)(random()*continent.nbCountries)+1;
+            alea = drawACountry(continent.nbCountries, drawnCountries, actualIdx);
+            actualIdx++;
             countryRandomly = search(continent, alea);
             msg += "\nOù se trouve ce pays: " + countryRandomly[0];
             country = readChoice(msg, continent.nbCountries, player);
@@ -301,7 +330,7 @@ class AsciiGuessr extends Program {
                 pts = update(countryRandomly[1], pts);
                 msgChoiceCountry = ANSI_GREEN + "Correct ! (+" + (pts-ptsBase) + "pts)" + ANSI_RESET;
             } else {
-                msgChoiceCountry = ANSI_RED + "Incorrect ! (+" + (pts-ptsBase) + "pts)" + ANSI_RESET;
+                msgChoiceCountry = ANSI_RED + "Incorrect ! (+0pts)" + ANSI_RESET;
             }
         }
         setPlayerPts(player, getContinentIndex(continent.name), pts);
@@ -348,7 +377,7 @@ class AsciiGuessr extends Program {
 
 // // TODO
 // X - Afficher les nbr de pts gagnés à chaque pays trouvé (10,100,1000)
-// - Eviter de tirer 2 fois le même pays
+// X - Eviter de tirer 2 fois le même pays
 // - Mode histoire (Introduction du mode solo pour un nouveau joueur avec une histoire en parcourant chaque continent puis les autres fois le joueur aura le choix du continent)
 // - Mode 1v1 (Même principe que le mode solo pour les pts mais sur 2 continents aléatoires)
 // - Système de classement, on classe les 10 meilleurs joueurs selon le nbr de pts (on charge le csv)
