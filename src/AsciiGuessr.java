@@ -1,3 +1,12 @@
+//                     _ _  _____                          
+//      /\            (_|_)/ ____|                         
+//     /  \   ___  ___ _ _| |  __ _   _  ___  ___ ___ _ __ 
+//    / /\ \ / __|/ __| | | | |_ | | | |/ _ \/ __/ __| '__|
+//   / ____ \\__ \ (__| | | |__| | |_| |  __/\__ \__ \ |   
+//  /_/    \_\___/\___|_|_|\_____|\__,_|\___||___/___/_|   
+//
+// Developpé par: AOULAD-TAYAB Karim, BOUKEBOUT Nassim
+                                                                                       
 import extensions.File;
 import extensions.CSVFile;
 
@@ -304,6 +313,26 @@ class AsciiGuessr extends Program {
         return alea;
     }
 
+    void printCharByChar(String msg, int delay) {
+        int sizeMsg = length(msg);
+        String m = "";
+        for(int i = 0; i < sizeMsg; i++) {
+            m += charAt(msg,i);
+            print(m);
+            delay(delay);
+            refreshScreenWithCoords(1,1);
+        }
+    }
+
+    String titleGameAnimated(String filepath) {
+        File nom_jeu_ascii = newFile(filepath);
+        String msg = "";
+        while(ready(nom_jeu_ascii))
+            msg += readLine(nom_jeu_ascii) + "\n";
+            printCharByChar(msg, 4);
+        return msg;
+    }
+
     void startGame(Continent continent, Player player) {
         String[] countryRandomly;
         String msg = "";
@@ -316,6 +345,26 @@ class AsciiGuessr extends Program {
         int[] drawnCountries = new int[continent.nbCountries];
         int actualIdx = 0;
 
+        if(!player.intro) {
+            printCharByChar("Salut ! Mon nom est Mappy, heureux de te rencontrer " + player.name + " !", 50);
+            printCharByChar("Ici tu es sur le tutoriel d'AsciiGuessr, voulez vous le passer (oui/non): ", 50);
+            print("Ici tu es sur le tutoriel d'AsciiGuessr, voulez-vous le passer (oui/non): ");
+            String intro_choix = readString();
+            while(!equals(intro_choix,"oui") && !equals(intro_choix, "non")) {
+                println("Veuillez entrer oui ou non.");
+                print("> ");
+                intro_choix = readString();
+                
+            }
+            player.intro = equals(intro_choix, "oui");
+
+            if(player.intro) {
+                println("Tutoriel du jeu...");
+                save(player);
+                return;
+            }
+        } 
+
         for(int i = 0; i < 10; i++) {
             msg = toString(continent, pts, foundCountries, continent.nbCountries) + "\n" + msgChoiceCountry;
             alea = drawACountry(continent.nbCountries, drawnCountries, actualIdx);
@@ -323,7 +372,7 @@ class AsciiGuessr extends Program {
             countryRandomly = search(continent, alea);
             msg += "\nOù se trouve ce pays: " + countryRandomly[0];
             country = readChoice(msg, continent.nbCountries, player);
-            
+                
             if(country == alea) {
                 foundCountries++;
                 ptsBase = pts;
@@ -348,9 +397,10 @@ class AsciiGuessr extends Program {
         boolean trouve = false;
         Continent continent;
         Player player;
+        String title = titleGameAnimated(RESSOURCES_PATH + "ascii/Nomjeu.txt");
 
-        println("Bienvenue dans AsciiGuessr ! Le jeu qui va vous faire aimer la géographie.");
-        println("Si vous vous sentez prêt à tenter votre chance, entrez votre pseudo: \n");
+        println(title);
+        println("\nSi vous vous sentez prêt à tenter votre chance, entrez votre pseudo: \n");
         
         player = newPlayer(getNickname());
         authenticate(player);
@@ -375,10 +425,13 @@ class AsciiGuessr extends Program {
 
 }
 
+// Commit
+// Affichage du titre du jeu en ascii art en mode animé
+//
+
 // // TODO
 // X - Afficher les nbr de pts gagnés à chaque pays trouvé (10,100,1000)
 // X - Eviter de tirer 2 fois le même pays
 // - Mode histoire (Introduction du mode solo pour un nouveau joueur avec une histoire en parcourant chaque continent puis les autres fois le joueur aura le choix du continent)
 // - Mode 1v1 (Même principe que le mode solo pour les pts mais sur 2 continents aléatoires)
 // - Système de classement, on classe les 10 meilleurs joueurs selon le nbr de pts (on charge le csv)
-// - (optionnel: cinématique du joueur lorsqu'il débute une partie)
