@@ -40,7 +40,7 @@ class AsciiGuessr extends Program {
             return 0;
         else if(name == ContinentName.EUROPE)
             return 1;
-        else if(name == ContinentName.ASIA)
+        else if(name == ContinentName.AMERICA)
             return 2;
         else
             return 3;
@@ -240,19 +240,23 @@ class AsciiGuessr extends Program {
             return "Amérique";
     }
 
+    ContinentName toEnum(int n) {
+        if(n == 1) {
+            return ContinentName.AFRICA;
+        } else if(n == 2) {
+            return ContinentName.EUROPE;
+        } else if(n == 3) {
+            return ContinentName.AMERICA;
+        } else {
+            return ContinentName.ASIA;
+        }
+    }
+
     // --------------------------------------
     // Fonctions pour la classe 'Continent'
     Continent newContinent(int choice) {
         Continent continent = new Continent();
-        if(choice == 1) {
-            continent.name = ContinentName.EUROPE;
-        } else if(choice == 2) {
-            continent.name = ContinentName.AFRICA;
-        } else if(choice == 3) {
-            continent.name = ContinentName.AMERICA;
-        } else if(choice == 4) {
-            continent.name = ContinentName.ASIA;
-        }
+        continent.name = toEnum(choice);
         continent.nbCountries = countCountries(continent.name);
         continent.ascii = getFileContent(RESSOURCES_PATH + "ascii/" + toString(continent.name) + ".txt");
         return continent;
@@ -274,7 +278,7 @@ class AsciiGuessr extends Program {
         return player;
     }
 
-    void setPlayerPts(Player player, int idxContinent, int pts) {
+    void setPts(Player player, int idxContinent, int pts) {
         if(pts > player.pts[idxContinent]) {
             player.pts[idxContinent] = pts;
         }
@@ -282,10 +286,9 @@ class AsciiGuessr extends Program {
 
     String toString(Player player) {
         int sizePts = length(player.pts);
-        String[] countries_match = new String[]{"Afrique", "Europe", "Amérique", "Asie"};
         String profile = player.name + " => ";
         for(int i = 0; i < sizePts; i++) {
-            profile += countries_match[i] + " " + ANSI_BLUE + player.pts[i] + "pts" + ANSI_RESET + " | ";
+            profile += toString(toEnum(i+1)) + " " + ANSI_BLUE + player.pts[i] + "pts" + ANSI_RESET + " | ";
         }
         return profile;
     }
@@ -300,7 +303,7 @@ class AsciiGuessr extends Program {
 
     int continentsMenu(Player player) {
         refreshScreenWithCoords(1,1);
-        String msg = "Choisissez un continent: \n\n(1) Europe\n(2) Afrique\n(3) Amérique\n(4) Asie\n(5) Revenir en arrière\n";
+        String msg = "Choisissez un continent: \n\n(1) Afrique\n(2) Europe\n(3) Amérique\n(4) Asie\n(5) Revenir en arrière\n";
         return readChoice(msg, 5, player);
     }
 
@@ -386,7 +389,7 @@ class AsciiGuessr extends Program {
                 msgChoiceCountry = ANSI_RED + "Incorrect ! (+0pts)" + ANSI_RESET;
             }
         }
-        setPlayerPts(player, getContinentIndex(continent.name), pts);
+        setPts(player, getContinentIndex(continent.name), pts);
         save(player);
     }
 
@@ -426,6 +429,11 @@ class AsciiGuessr extends Program {
         }
     }
 }
+
+// Commit
+// - Correction du bug d'affichage des pts par continent (Amérique/Asie) + refactor
+// - Ajout du ficihier .gitignore pour cacher le dossier 'classes' (fichiers après compilation du projet)
+// - Modification du compile.sh pour créer le dossier 'classes' (s'il n'existe pas)
 
 // // TODO
 // - Tutoriel pour guider le joueur
