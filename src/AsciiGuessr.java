@@ -92,7 +92,6 @@ class AsciiGuessr extends Program {
             for(int i = 0; i < 4; i++) {
                 player.pts[i] = stringToInt(players[ligPlayer][i+1]);
             }
-            player.intro = equals(players[ligPlayer][5],"true");
         }
     }
 
@@ -221,8 +220,7 @@ class AsciiGuessr extends Program {
         for(int i = 1; i <= 4; i++) {
             players[pos][i] = "" + player.pts[i-1];
         }
-        players[pos][5] = "" + player.intro;
-  
+ 
         saveCSV(players, RESSOURCES_PATH + "csv/Joueurs.csv");
         return existNickname;
     }
@@ -264,7 +262,7 @@ class AsciiGuessr extends Program {
 
     String toString(Continent continent, int pts, int foundCountries, int nbCountries) {
         String score = "\n      " + foundCountries + "/10 pays trouvés |  " + pts + " pts";
-        String asciiContinent = "                             " + ANSI_BLUE + toString(continent.name) + "\n\n" + continent.ascii + ANSI_RESET;
+        String asciiContinent = "                             " + ANSI_YELLOW  + toString(continent.name) + "\n\n" + continent.ascii + ANSI_RESET;
         return score + asciiContinent;
     }
 
@@ -274,7 +272,6 @@ class AsciiGuessr extends Program {
         Player player = new Player();
         player.name = nickname;
         player.pts = new int[]{0,0,0,0};
-        player.intro = false;
         return player;
     }
 
@@ -297,7 +294,7 @@ class AsciiGuessr extends Program {
     // Fonctions d'affichage / saisie
     int gameModeMenu(Player player) {
         refreshScreenWithCoords(1,1);
-        String msg = "Votre score actuel: " + toString(player) + "\n(1) Mode solo\n(2) Mode 1v1\n(3) Classement des joueurs\n(4) Quitter\n";
+        String msg = "Votre score actuel: " + toString(player) + "\n\n(1) Mode solo\n(2) Mode 1v1\n(3) Classement des joueurs\n(4) Quitter\n";
         return readChoice(msg, 4, player);
     }
 
@@ -331,24 +328,24 @@ class AsciiGuessr extends Program {
         File nom_jeu_ascii = newFile(filepath);
         String msg = "";
         while(ready(nom_jeu_ascii))
-            msg += readLine(nom_jeu_ascii) + "\n";
+            msg += ANSI_CYAN + readLine(nom_jeu_ascii) + ANSI_RESET + "\n";
             printCharByChar(msg, 2);
         println(msg);
     }
 
-    boolean askTutorial(Player player) {
-        String intro_choice;
-        printCharByChar("Salut ! Mon nom est Mappy, heureux de te rencontrer " + player.name + " !", 60);
-        printCharByChar("Ici tu es sur le tutoriel d'AsciiGuessr, une fois validé ce tutoriel vous pourrez jouer directement", 60);
-        printCharByChar("Voulez-vous passer ce tutoriel ? (oui/non):", 50);
-        print("Voulez-vous passer ce tutoriel ? (oui/non): ");
-        intro_choice = readString();
-        while(!equals(intro_choice,"oui") && !equals(intro_choice, "non")) {
-            println("Veuillez entrer oui ou non.");
-            print(player.name + PROMPT);
-            intro_choice = readString();     
+    void printLoadingScreen(String tip) {
+        for(int i = 0; i < 3; i++) {
+            refreshScreenWithCoords(1,1);
+            cursor(4,20);
+            println(ANSI_CYAN + "Astuce: " + ANSI_RESET +  ANSI_CYAN_BG  + tip + ANSI_RESET);
+            cursor(2,80);
+            print("Chargement");
+            for(int j = 0; j < 3; j++) {
+                cursor(2,90+j);
+                print('.');
+                delay(500);
+            }
         }
-        return equals(intro_choice,"oui");
     }
 
     void startGame(Continent continent, Player player) {
@@ -363,15 +360,9 @@ class AsciiGuessr extends Program {
         int[] drawnCountries = new int[continent.nbCountries];
         int actualIdx = 0;
 
-        if(!player.intro) {
-            boolean tutorial = askTutorial(player);
-            player.intro = true;
-            save(player);
-            if(tutorial) {
-                // Tutoriel...
-            }
-        } 
-
+        printLoadingScreen("Selon la difficulté du pays, vous pouvez gagner de 10 à 1000pts (Facile : 10pts, Moyen : 100pts, Difficile: 1000pts)");
+        refreshScreenWithCoords(1,1);
+ 
         for(int i = 0; i < 10; i++) {
             msg = toString(continent, pts, foundCountries, continent.nbCountries) + "\n" + msgChoiceCountry;
             alea = drawACountry(continent.nbCountries, drawnCountries, actualIdx);
@@ -406,11 +397,11 @@ class AsciiGuessr extends Program {
         Player player;
 
         printTitleGameAnimated(RESSOURCES_PATH + "ascii/NomJeu.txt");
+
         println("\nSi vous vous sentez prêt à tenter votre chance, entrez votre pseudo: \n");
-        
         player = newPlayer(getNickname());
         authenticate(player);
-        
+    
         while(!trouve) {
             choice = gameModeMenu(player);
             if(choice == 1) {
@@ -427,17 +418,15 @@ class AsciiGuessr extends Program {
                 trouve = true;
             }
         }
-    }
+    } 
 }
 
-// Commit
-// - Correction du bug d'affichage des pts par continent (Amérique/Asie) + refactor
-// - Ajout du ficihier .gitignore pour cacher le dossier 'classes' (fichiers après compilation du projet)
-// - Modification du compile.sh pour créer le dossier 'classes' (s'il n'existe pas)
-
 // // TODO
-// - Tutoriel pour guider le joueur
-// - Mode 1v1
-// - Système de classement, on classe les 10 meilleurs joueurs selon le nbr de pts (on charge le csv)
-//  - Afficher la moyenne des pts de chaque continent
+// Répartition des tâches:
+// - Trouver des astuces (N)
+// - Mode 1v1 (K)
+// - Système de classement, on classe les 10 meilleurs joueurs selon le nbr de pts (on charge le csv) (N)
+//  - Afficher la moyenne des pts de chaque continent (N)
+// - Mode quiz sur les drapeaux (https://github.com/maugier/ascii-flags) (K/N)
 // - Commenter le code
+// - Coder les fonctions de test
