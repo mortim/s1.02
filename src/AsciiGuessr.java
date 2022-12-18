@@ -17,6 +17,8 @@ class AsciiGuessr extends Program {
 
     // --------------------------------------
     // Fonctions utiles
+
+    // Récupère le contenu d'un fichier
     String getFileContent(String filepath) {
         String output = "";
         File file = newFile(filepath);
@@ -25,6 +27,7 @@ class AsciiGuessr extends Program {
         return output;
     }
 
+    // Vérifie si la chaîne de caractères est un nombre (ne comporte que des chiffres en caractère)
     boolean isNumber(String num) {
         int numLength = length(num);
         for(int i = 0; i < numLength; i++) {
@@ -35,6 +38,7 @@ class AsciiGuessr extends Program {
         return true;
     }
 
+    // Retourne un entier associé à chaque élement de l'énumeration 'ContinentName' (entier qui représente l'indice dans le tableau de pts tel qu'il est défini dans la classe 'Player')
     int getIndex(ContinentName name) {
         if(name == ContinentName.AFRICA)
             return 0;
@@ -46,6 +50,7 @@ class AsciiGuessr extends Program {
             return 3;
     }
 
+    // Fonction qui demande en entrée un choix entre 1 et nbChoice (utilisé pour les menus mais également pour une partie de jeu quand il faut deviner le pays d'un continent selon un entier qui le représente)
     int readChoice(String msg, int nbChoice, Player player) {
         int choice = 1;
         String input = "";
@@ -81,6 +86,7 @@ class AsciiGuessr extends Program {
         return choice;
     }
 
+    // Retourne le nombre de points obtenu selon le niveau de difficulté du pays trouvé
     int getNewPts(String difficulty, int pts) {
         if(equals(difficulty,"1"))
             return pts+10;
@@ -90,6 +96,7 @@ class AsciiGuessr extends Program {
             return pts+1000;
     }
 
+    // Vérifie si l'élement est dans le tableau (utilisé pour vérifier si le pays qu'on a tiré est dans le tableau des pays déjà tirés)
     boolean isInArray(int n, int[] tab) {
         int sizeTab = length(tab);
         for(int i = 0; i < sizeTab; i++) {
@@ -100,6 +107,7 @@ class AsciiGuessr extends Program {
         return false;
     }
 
+    // Tire aléatoirement un pays (en évitant de tomber plusieurs fois le même pays dans la même session de jeu)
     int drawACountry(int nbCountries, int[] drawnCountries, int actualIdx) {
         int alea = -1;
         boolean termine = false;
@@ -116,6 +124,7 @@ class AsciiGuessr extends Program {
         return alea;
     }
 
+    // Remet le curseur du terminal sur les cordonnées donnés en paramètre et efface le terminal (utilisé pour changer de 'scène' => passer du menu à une session de jeu par exemple) 
     void refreshScreenWithCoords(int x, int y) {
         cursor(x,y);
         clearScreen();
@@ -123,6 +132,8 @@ class AsciiGuessr extends Program {
     
     // --------------------------------------
     // Fonctions pour les fichiers CSV
+
+    // Compte le nombre de pays (dans le CSV 'Pays.csv') qui sont issus du même continent que celui passé en paramètres (utilisé pour la fonction readChoice())
     int countCountries(ContinentName name) {
         CSVFile countries = loadCSV(RESSOURCES_PATH + "csv/Pays.csv");
         int lig = rowCount(countries);
@@ -135,6 +146,7 @@ class AsciiGuessr extends Program {
         return k;
     }
 
+    // Récupère tous les joueurs inscrit au jeu (dans le CSV 'Joueurs.csv')
     String[][] loadPlayers() {
         CSVFile players = loadCSV(RESSOURCES_PATH + "csv/Joueurs.csv");
         int lig = rowCount(players);
@@ -148,6 +160,7 @@ class AsciiGuessr extends Program {
         return result;
     }
 
+    // Retourner la ligne (dans le CSV 'Joueurs.csv') associé au joueur passé en paramètre (utilisé pour opérer des mis à jours sur le joueur ou pour l'authentification)
     int searchLig(Player player) {
         CSVFile playersCSV = loadCSV(RESSOURCES_PATH + "csv/Joueurs.csv");
         int lig = rowCount(playersCSV);
@@ -161,6 +174,7 @@ class AsciiGuessr extends Program {
         return -1;
     }
 
+    // Retourne toutes les informations sur le pays qu'on a choisi (dans le CSV 'Pays.csv') pendant la session de jeu (selon le numéro choisi et dans quel continent on joue)
     String[] searchCountry(Continent continent, int num) {
         String[] result = new String[]{"", ""};
         CSVFile countries = loadCSV(RESSOURCES_PATH + "csv/Pays.csv");
@@ -176,6 +190,7 @@ class AsciiGuessr extends Program {
         return result;
     }
 
+    // Met à jour les informations du joueur ou crée une nouvelle ligne dans le CSV si le joueur saisi n'existe pas (dans l'authentification)
     boolean save(Player player) {
         CSVFile playersCSV = loadCSV(RESSOURCES_PATH + "csv/Joueurs.csv");
         String[][] players;
@@ -220,6 +235,7 @@ class AsciiGuessr extends Program {
             return "Amérique";
     }
 
+    // Retourne l'équivalent du choix du continent du menu (numéroté de 1 à 4) en une valeur de l'énumeration 'ContinentName'
     ContinentName toEnum(int n) {
         if(n == 1) {
             return ContinentName.AFRICA;
@@ -242,6 +258,7 @@ class AsciiGuessr extends Program {
         return continent;
     }
 
+    // Réprésentation du score et du jeu en chaîne de caractères (session de jeu)
     String toString(Continent continent, int pts, int foundCountries, int nbCountries, int remainderCountries) {
         String score = "\n      " + foundCountries + "/10 pays trouvés (" + remainderCountries + " pays restants) |  " + pts + " pts";
         String asciiContinent = "                             " + ANSI_YELLOW  + toString(continent.name) + "\n\n" + continent.ascii + ANSI_RESET;
@@ -253,16 +270,18 @@ class AsciiGuessr extends Program {
     Player newPlayer(String nickname) {
         Player player = new Player();
         player.name = nickname;
-        player.pts = new int[]{0,0,0,0};
+        player.pts = new int[]{0,0,0,0}; // Afrique, Europe, Amérique, Asie (même ordre que les colonnes du CSV 'Joueurs.csv')
         return player;
     }
 
+    // Met à jour le nombre de points du joueur uniquement s'il a dépassé son score de pts actuel
     void setPts(Player player, int idxContinent, int pts) {
         if(pts > player.pts[idxContinent]) {
             player.pts[idxContinent] = pts;
         }
     }
 
+    // Authentification via un pseudo, si le nom n'est pas présent dans le CSV 'Joueurs.csv', on crée un nouveau joueur
     void authenticate(Player player) {
         String[][] players;
         int ligPlayer;
@@ -280,6 +299,7 @@ class AsciiGuessr extends Program {
         }
     }
 
+    // Représentation en chaîne de caractères du profil du joueur (utilisé après authentification et pour le classement des meilleurs joueurs)
     String toString(Player player) {
         int sizePts = length(player.pts);
         String profile = player.name + " => ";
@@ -291,6 +311,8 @@ class AsciiGuessr extends Program {
 
     // --------------------------------------
     // Fonctions d'affichage / saisie
+
+    // Affichage du menu selon le type de menu et le joueur
     int menu(Menu type, Player player) {
         String msg = "";
         refreshScreenWithCoords(1,1);
@@ -315,6 +337,7 @@ class AsciiGuessr extends Program {
         return nickname;
     }
 
+    // Affiche caractère par caractère avec un délai le texte pour un affichage avec plus d'immersion, s'inspirant du style RPG
     void printCharByChar(String msg, int delay) {
         int sizeMsg = length(msg);
         String m = "";
@@ -326,6 +349,7 @@ class AsciiGuessr extends Program {
         }
     }
 
+    // Affiche le titre du jeu animé par la fonction printCharByChar
     String titleAnimated(String filepath) {
         File nom_jeu_ascii = newFile(filepath);
         String msg = "";
@@ -335,6 +359,7 @@ class AsciiGuessr extends Program {
         return msg;
     }
 
+    // Affiche un écran de chargement avant le lancement de jeu avecu un conseil (pour plus de 'réalisme' dans le jeu)
     void printLoadingScreen(String tip) {
         for(int i = 0; i < 3; i++) {
             refreshScreenWithCoords(4,20);
@@ -349,6 +374,7 @@ class AsciiGuessr extends Program {
         }
     }
 
+    // Fonction qui lance une session de jeu
     void startGame(Continent continent, Player player, Mode mode) {
         String[] countryRandomly;
         String msg = "";
@@ -387,6 +413,7 @@ class AsciiGuessr extends Program {
         }
     }
 
+    // Fonction qui lance le mode 1v1 (en utilisant la fonction startGame qui va lancer une session de jeu pour chaque joueur)
     void multiGame(Player player, Player player2) {
         String msg;
         int alea_continent = (int)(random()*4)+1;
@@ -422,7 +449,70 @@ class AsciiGuessr extends Program {
 
     // --------------------------------------
     // Fonctions de test
-    // ...
+    void testIsNumber() {
+        assertEquals(true, isNumber("15"));
+        assertEquals(false, isNumber("hello"));
+        assertEquals(false, isNumber("15a"));
+    }
+
+    void testGetIndex() {
+        assertEquals(0, getIndex(ContinentName.AFRICA));
+        assertEquals(1, getIndex(ContinentName.EUROPE));
+        assertEquals(2, getIndex(ContinentName.AMERICA));
+        assertEquals(3, getIndex(ContinentName.ASIA));
+    }
+
+    void testGetNewPts() {
+        assertEquals(20, getNewPts("1", 10));
+        assertEquals(110, getNewPts("2", 10));
+        assertEquals(1010, getNewPts("3", 10));
+    }
+
+    void testIsInArray() {
+        int[] tab = new int[]{1,2,3};
+        assertEquals(true, isInArray(1, tab));
+        assertEquals(false, isInArray(5, tab));
+    }
+
+    void testDrawACountry() {
+        int nbCountries = 13;
+        int[] drawnCountries = new int[nbCountries];
+        int actualIdx = 0;
+
+        int country = drawACountry(nbCountries, drawnCountries, actualIdx);
+        actualIdx++;
+
+        assertEquals(true, country >= 1 && country <= nbCountries);
+        // Après le tirage le nombre est placé dans le tableau des nombres déjà tirés
+        assertEquals(true, isInArray(country, drawnCountries));
+        
+        // On retire à nouveau pour comparer s'il est différent par rapport à l'ancien nombre tiré
+        country = drawACountry(nbCountries, drawnCountries, actualIdx);
+        // On ne prend pas le dernier car c'est le nouveau nombre différent qu'on a tiré et qu'on met dans le tableau des nombres déjà tirés, on vérifie donc avant ce nombre
+        for(int i = 0; i < 1; i++) {
+            assertEquals(true, drawnCountries[i] != country);
+        }
+    }
+
+    void testCountCountries() {
+        assertEquals(25, countCountries(ContinentName.AFRICA));
+        assertEquals(13, countCountries(ContinentName.AMERICA));
+        assertEquals(17, countCountries(ContinentName.ASIA));
+        assertEquals(23, countCountries(ContinentName.EUROPE));
+    }
+
+    void testSearchLig() {
+        Player player = newPlayer("karim");
+        Player player2 = newPlayer("test");
+        assertEquals(1, searchLig(player));
+        assertEquals(-1, searchLig(player2));
+    }
+
+    void testSearchCountry() {
+        Continent continent = newContinent(1);
+        String[] tab = new String[]{"Egypte", "1"};
+        assertArrayEquals(tab, searchCountry(continent, 4));
+    }
 
     // --------------------------------------
     // Fonction principale
@@ -430,7 +520,7 @@ class AsciiGuessr extends Program {
         int choice = -1;
         boolean trouve = false;
         Player player = null;
-
+        
         while(!trouve) {
             // Menu principal
             if(choice == -1) {
@@ -438,7 +528,7 @@ class AsciiGuessr extends Program {
             }
 
             if(choice == 1) {
-                // 1v1
+                // Mode 1v1
                 multiGame(newPlayer(askNickname()), newPlayer(askNickname()));
                 choice = readChoice("\n(1) Recommencer une partie\n(2) Revenir au menu principal\n", 2, null);
                 if(choice == 2) {
@@ -474,14 +564,14 @@ class AsciiGuessr extends Program {
     } 
 }
 
+// Commit:
+// - Commenter le code
+// - Faire les tests
+
 // // TODO
 // Répartition des tâches:
 // - Trouver des astuces (N)
-// x - Mode 1v1 (K)
 // - Système de classement, on classe les 10 meilleurs joueurs selon le nbr de pts (on charge le csv) (N)
 //  - Afficher la moyenne des pts de chaque continent (N)
-// - Mode quiz sur les drapeaux (https://github.com/maugier/ascii-flags) (K/N)
-// - Commenter le code
-// - Coder les fonctions de test
-// - Colorier le numéro de pays choisi en bleu, en vert le numéro de pays trouvé ou rouge (s'il n'a pas été trouvé)
-// - Optimiser la fonction save et searchLig avec loadPlayers
+// - (Optimiser la fonction save et searchLig avec loadPlayers)
+// - (Colorier le numéro choisi en vert s'il est correct et rouge s'il est incorrect en donnant coloriant le numéro qu'il fallait trouver en vert)
