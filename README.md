@@ -12,7 +12,7 @@ Des captures d'écran illustrant le fonctionnement du logiciel sont proposées d
 
 Afin d'utiliser le projet, il suffit de taper les commandes suivantes dans un terminal :
 
-**compilation des fichiers présents dans 'src' et création des fichiers '.class' dans 'classes'**
+**Compilation des fichiers présents dans 'src' et création des fichiers '.class' dans 'classes'**
 
 ```
 ./compile.sh

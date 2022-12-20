@@ -124,10 +124,55 @@ class AsciiGuessr extends Program {
         return alea;
     }
 
+    // Trie les joueurs par ordre décroissant selon leur moyenne de pts sur chaque continent en utilisant le tri par séléction
+    void sortPlayers(String[] names, int[] avgPts) {
+        int size = length(names);
+        String name_tmp;
+        int avg_tmp;
+        int iMax;
+        for(int i = 0; i < size-1; i++) {
+            iMax = i;
+            for(int j = i+1; j < size; j++) {
+                if(avgPts[j] > avgPts[iMax]) {
+                    iMax = j;
+                }
+            }
+            if(iMax != i) {
+                name_tmp = names[i];
+                avg_tmp = avgPts[i];
+
+                names[i] = names[iMax];
+                names[iMax] = name_tmp;
+
+                avgPts[i] = avgPts[iMax];
+                avgPts[iMax] = avg_tmp;
+            }
+        }
+    }
+
     // Remet le curseur du terminal sur les cordonnées donnés en paramètre et efface le terminal (utilisé pour changer de 'scène' => passer du menu à une session de jeu par exemple) 
     void refreshScreenWithCoords(int x, int y) {
         cursor(x,y);
         clearScreen();
+    }
+
+    // Générer aléatoirement une astuce
+    String[] generateTip() {
+        // Premier élement => L'astuce, Deuxième élement => Sa position de curseur dans le terminal (sur le plan vertical)
+        String[] tipInfos = new String[2]; 
+        int alea = (int)(random()*3);
+
+        if(alea == 0) {
+            tipInfos[0] = "Selon la difficulté du pays, vous pouvez gagner de 10 à 1000pts (Facile : 10pts, Moyen : 100pts, Difficile: 1000pts)";
+            tipInfos[1] = "20";
+        } else if(alea == 1) {
+            tipInfos[0] = "Mémorise tes bonnes réponses pour tes prochaines parties !";
+            tipInfos[1] = "50";
+        } else {
+            tipInfos[0] = "Consultez le classement des joueurs pour évaluer votre niveau";
+            tipInfos[1] = "45";
+        }
+        return tipInfos;
     }
     
     // --------------------------------------
@@ -302,7 +347,7 @@ class AsciiGuessr extends Program {
     // Représentation en chaîne de caractères du profil du joueur (utilisé après authentification et pour le classement des meilleurs joueurs)
     String toString(Player player) {
         int sizePts = length(player.pts);
-        String profile = player.name + " => ";
+        String profile = player.name + " => \n";
         for(int i = 0; i < sizePts; i++) {
             profile += toString(toEnum(i+1)) + " " + ANSI_BLUE + player.pts[i] + "pts" + ANSI_RESET + " | ";
         }
@@ -355,15 +400,19 @@ class AsciiGuessr extends Program {
         String msg = "";
         while(ready(nom_jeu_ascii))
             msg += ANSI_CYAN + readLine(nom_jeu_ascii) + ANSI_RESET + "\n";
-            printCharByChar(msg, 2);
+            printCharByChar(msg, 1);
         return msg;
     }
 
     // Affiche un écran de chargement avant le lancement de jeu avecu un conseil (pour plus de 'réalisme' dans le jeu)
-    void printLoadingScreen(String tip) {
+    void printLoadingScreen() {
+        int alea = (int)(random()*3);
+        String[] tip = generateTip();
+
         for(int i = 0; i < 3; i++) {
-            refreshScreenWithCoords(4,20);
-            println(ANSI_CYAN + "Astuce: " + ANSI_RESET +  ANSI_BLUE_BG + ANSI_BLACK + tip + ANSI_RESET);
+            refreshScreenWithCoords(4,stringToInt(tip[1]));
+            println(ANSI_CYAN + "Astuce: " + ANSI_RESET +  ANSI_BLUE_BG + ANSI_BLACK + tip[0] + ANSI_RESET);
+
             cursor(2,80);
             print("Chargement");
             for(int j = 0; j < 3; j++) {
@@ -372,6 +421,46 @@ class AsciiGuessr extends Program {
                 delay(500);
             }
         }
+    }
+
+    // Affiche le classement de tous les joueurs par ordre décroissant
+    int ranking(Player player) {
+        String rank = "";
+        String[][] players = loadPlayers();
+        int size;
+        int sizePlayers = length(players, 1);
+        Player p;
+
+        // Tableaux triés dans l'ordre décroissant
+        String[] names = new String[sizePlayers-1];
+        int[] avgPts = new int[sizePlayers-1];
+
+        for(int i = 1; i < sizePlayers; i++) {
+            names[i-1] = players[i][0];
+            avgPts[i-1] = (stringToInt(players[i][1]) + stringToInt(players[i][2]) + stringToInt(players[i][3]) + stringToInt(players[i][4]))/4;
+        }
+
+        sortPlayers(names, avgPts);
+
+        rank += "Classement des 5 meilleurs joueurs de AsciiGuessr:\n\n";
+
+        // Dans le cas où le nombre de joueurs dans le CSV est inférieur à 5, pour éviter d'itérer trop de fois et provoquer une erreur
+        if(length(names) < 5) {
+            size = length(names);
+        } else {
+            size = 5;
+        }
+
+        for(int i = 0; i < size; i++) {
+            p = newPlayer(names[i]);
+            authenticate(p);
+            rank += (i+1) + " - " + toString(p) + "Moyenne: " + ANSI_CYAN + avgPts[i] + "pts" + ANSI_RESET + "\n\n";
+        }
+
+        rank += "\n(1) Revenir en arrière\n";
+
+        // J'ajoute 1 pour avoir l'indice 2 qui correspond au menu du joueur
+        return readChoice(rank, 1, player)+1;
     }
 
     // Fonction qui lance une session de jeu
@@ -387,7 +476,7 @@ class AsciiGuessr extends Program {
         int[] drawnCountries = new int[continent.nbCountries];
         int actualIdx = 0;
 
-        printLoadingScreen("Selon la difficulté du pays, vous pouvez gagner de 10 à 1000pts (Facile : 10pts, Moyen : 100pts, Difficile: 1000pts)");
+        printLoadingScreen();
         refreshScreenWithCoords(1,1);
 
         for(int i = 0; i < 10; i++) {
@@ -550,7 +639,7 @@ class AsciiGuessr extends Program {
                     // Pour revenir au menu du joueur après que la partie soit terminé ou si l'on est revenu en arrière
                     choice = 2;
                 } else if(choice == 2) { // Consulter le classement des joueurs
-                    // ...
+                    choice = ranking(player);
                 } else if(choice == 3) { // Se déconnecter
                     player = null;
                     choice = -1;
@@ -565,13 +654,10 @@ class AsciiGuessr extends Program {
 }
 
 // Commit:
-// - Commenter le code
-// - Faire les tests
+// - Trouver des astuces (N)
+// - Système de classement, on classe les 5 meilleurs joueurs selon la moyenne du nbr de pts de chaque continent (on charge le csv) (N)
 
 // // TODO
 // Répartition des tâches:
-// - Trouver des astuces (N)
-// - Système de classement, on classe les 10 meilleurs joueurs selon le nbr de pts (on charge le csv) (N)
-//  - Afficher la moyenne des pts de chaque continent (N)
+// Indiquer le bon numéro lorsque que l'on se trompe d'un pays dans une partie 
 // - (Optimiser la fonction save et searchLig avec loadPlayers)
-// - (Colorier le numéro choisi en vert s'il est correct et rouge s'il est incorrect en donnant coloriant le numéro qu'il fallait trouver en vert)
