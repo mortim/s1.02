@@ -14,6 +14,9 @@ class AsciiGuessr extends Program {
     // Constantes
     final String RESSOURCES_PATH = "../ressources/";
     final String PROMPT = "> ";
+    // Ces couleurs ne sont pas définies dans l'interface 'Curses' de iJava
+    final String ANSI_BROWN = "\033[0;33m";
+    final String ANSI_DARKGRAY = "\033[1;30m";
 
     // --------------------------------------
     // Fonctions utiles
@@ -207,12 +210,11 @@ class AsciiGuessr extends Program {
 
     // Retourner la ligne (dans le CSV 'Joueurs.csv') associé au joueur passé en paramètre (utilisé pour opérer des mis à jours sur le joueur ou pour l'authentification)
     int searchLig(Player player) {
-        CSVFile playersCSV = loadCSV(RESSOURCES_PATH + "csv/Joueurs.csv");
-        int lig = rowCount(playersCSV);
-        int col = columnCount(playersCSV);
-        
+        String[][] players = loadPlayers();
+        int lig = length(players, 1);
+
         for(int i = 1; i < lig; i++) {
-            if(equals(getCell(playersCSV, i, 0), player.name)) {
+            if(equals(players[i][0], player.name)) {
                 return i;
             }
         }
@@ -235,36 +237,41 @@ class AsciiGuessr extends Program {
         return result;
     }
 
-    // Met à jour les informations du joueur ou crée une nouvelle ligne dans le CSV si le joueur saisi n'existe pas (dans l'authentification)
-    boolean save(Player player) {
-        CSVFile playersCSV = loadCSV(RESSOURCES_PATH + "csv/Joueurs.csv");
-        String[][] players;
-        int lig = rowCount(playersCSV);
-        int col = columnCount(playersCSV);
-        int pos = searchLig(player);
-        boolean existNickname = true;
+    // Ajouter une nouvelle ligne au fichier CSV 'Joueurs.csv' (utilisé dans l'authetification du joueur, si le joueur n'existe pas)
+    void addNewCSVRow(String[][] players, Player player) {
+        int lig = length(players, 1);
+        int col = length(players, 2);
+        String[][] newPlayers = new String[lig+1][col];
 
-        if(pos == -1) {
-            lig++;
-            pos = lig-1;
-            existNickname = false;
-        } 
-
-        players = new String[lig][col];
-
-        for(int i = 0; i < lig-1; i++) {
+        for(int i = 0; i < lig; i++) {
             for(int j = 0; j < col; j++) {
-                players[i][j] = getCell(playersCSV, i, j);
+                newPlayers[i][j] = players[i][j];
             }
         }
 
+        newPlayers[lig][0] = player.name;
+        newPlayers[lig][1] = "" + player.pts[0];
+        newPlayers[lig][2] = "" + player.pts[1];
+        newPlayers[lig][3] = "" + player.pts[2];
+        newPlayers[lig][4] = "" + player.pts[3];
+
+        saveCSV(newPlayers, RESSOURCES_PATH + "csv/Joueurs.csv");
+    }   
+
+    // Met à jour les informations du joueur
+    void save(Player player) {
+        String[][] players = loadPlayers();
+        int lig = length(players, 1);
+        int col = length(players, 2); 
+        int pos = searchLig(player);
+
         players[pos][0] = player.name;
+
         for(int i = 1; i <= 4; i++) {
             players[pos][i] = "" + player.pts[i-1];
         }
  
         saveCSV(players, RESSOURCES_PATH + "csv/Joueurs.csv");
-        return existNickname;
     }
 
     // --------------------------------------
@@ -328,16 +335,14 @@ class AsciiGuessr extends Program {
 
     // Authentification via un pseudo, si le nom n'est pas présent dans le CSV 'Joueurs.csv', on crée un nouveau joueur
     void authenticate(Player player) {
-        String[][] players;
-        int ligPlayer;
-
-        ligPlayer = searchLig(player);
+        String[][] players = loadPlayers();
+        int ligPlayer = searchLig(player);
         if(ligPlayer == -1) {
             println("Vous venez de créer un nouveau compte...");
             delay(1000);
-            save(player);
+            addNewCSVRow(players, player);
         } else {
-            players = loadPlayers();
+            // Récupère les points du joueur existant et les affecte aux attributs de la classe 'Joueur' associé à ce joueur
             for(int i = 0; i < 4; i++) {
                 player.pts[i] = stringToInt(players[ligPlayer][i+1]);
             }
@@ -454,7 +459,22 @@ class AsciiGuessr extends Program {
         for(int i = 0; i < size; i++) {
             p = newPlayer(names[i]);
             authenticate(p);
-            rank += (i+1) + " - " + toString(p) + "Moyenne: " + ANSI_CYAN + avgPts[i] + "pts" + ANSI_RESET + "\n\n";
+
+            if((i+1) == 1) {
+                rank += ANSI_YELLOW + (i+1) + ANSI_RESET;
+            } else if((i+1) == 2) {
+                rank += ANSI_DARKGRAY + (i+1) + ANSI_RESET;
+            } else if((i+1) == 3) {    
+                rank += ANSI_BROWN + (i+1) + ANSI_RESET;
+            } else {
+                rank += (i+1);
+            }
+            rank += " - ";
+            if(equals(names[i], player.name)) {
+                rank += ANSI_GREEN + "(Vous)" + " " + ANSI_RESET;
+            }
+
+            rank += toString(p) + "Moyenne: " + ANSI_CYAN + avgPts[i] + "pts" + ANSI_RESET + "\n\n";
         }
 
         rank += "\n(1) Revenir en arrière\n";
@@ -652,6 +672,3 @@ class AsciiGuessr extends Program {
         }
     } 
 }
-
-// TODO
-// - Optimiser la fonction save et searchLig avec loadPlayers

@@ -1,6 +1,5 @@
 nom_joueur,points_afrique,points_europe,points_amerique,points_asie
 karim,1140,1230,1150,1150
 ghost,0,1230,1150,0
-ton,1140,4000,1150,6000
-tim,0,8000,0,5000
-tom,0,8000,0,5000
+ton,0,4000,1150,6000
+tim,130,8000,0,5000
