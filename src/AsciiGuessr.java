@@ -493,7 +493,7 @@ class AsciiGuessr extends Program {
                 pts = getNewPts(countryRandomly[1], pts);
                 msgChoiceCountry = ANSI_GREEN + "Correct ! (+" + (pts-ptsBase) + "pts)" + ANSI_RESET;
             } else {
-                msgChoiceCountry = ANSI_RED + "Incorrect ! (+0pts)" + ANSI_RESET;
+                msgChoiceCountry = ANSI_RED + "Incorrect ! (+0pts)" + ANSI_RESET + " | La réponse correcte était: " + ANSI_UNDERLINE + ANSI_CYAN + alea + ANSI_RESET;
             }
         }
         setPts(player, getIndex(continent.name), pts);
@@ -653,11 +653,5 @@ class AsciiGuessr extends Program {
     } 
 }
 
-// Commit:
-// - Trouver des astuces (N)
-// - Système de classement, on classe les 5 meilleurs joueurs selon la moyenne du nbr de pts de chaque continent (on charge le csv) (N)
-
-// // TODO
-// Répartition des tâches:
-// Indiquer le bon numéro lorsque que l'on se trompe d'un pays dans une partie 
-// - (Optimiser la fonction save et searchLig avec loadPlayers)
+// TODO
+// - Optimiser la fonction save et searchLig avec loadPlayers
