@@ -90,13 +90,13 @@ class AsciiGuessr extends Program {
     }
 
     // Retourne le nombre de points obtenu selon le niveau de difficulté du pays trouvé
-    int getNewPts(String difficulty, int pts) {
+    int getPtsByDifficulty(String difficulty) {
         if(equals(difficulty,"1"))
-            return pts+10;
+            return 10;
         else if(equals(difficulty,"2"))
-            return pts+100;
+            return 100;
         else
-            return pts+1000;
+            return 1000;
     }
 
     // Vérifie si l'élement est dans le tableau (utilisé pour vérifier si le pays qu'on a tiré est dans le tableau des pays déjà tirés)
@@ -367,13 +367,16 @@ class AsciiGuessr extends Program {
         String msg = "";
         refreshScreenWithCoords(1,1);
         if(type == Menu.GAME) {
-            msg = titleAnimated(RESSOURCES_PATH + "ascii/NomJeu.txt") + "\n\n(1) Se défier en 1v1 (compte invité)\n(2) Se connecter\n(3) Quitter\n";
+            msg = titleAnimated(RESSOURCES_PATH + "ascii/NomJeu.txt");
+            msg += "\n╔════════════════════════════════════╗\n║(1) Se défier en 1v1 (compte invité)║\n║(2) Se connecter                    ║\n║(3) Quitter                         ║\n╚════════════════════════════════════╝\n";
             return readChoice(msg, 3, player);
         } else if(type == Menu.PLAYER) {
-            msg = "Votre score actuel: " + toString(player) + "\n\n(1) Commencer une partie\n(2) Classement des joueurs\n(3) Se déconnecter\n(4) Quitter\n";
+            msg = "Votre score actuel: " + toString(player);
+            msg += "\n\n╔════════════════════════════════════╗\n║(1) Commencer une partie            ║\n║(2) Classement des joueurs          ║\n║(3) Se déconnecter                  ║\n║(4) Quitter                         ║\n╚════════════════════════════════════╝\n";
             return readChoice(msg, 4, player);
         }
-        msg = "Choisissez un continent: \n\n(1) Afrique\n(2) Europe\n(3) Amérique\n(4) Asie\n(5) Revenir en arrière\n";
+        msg = "Choisissez un continent: \n";
+        msg += "\n╔════════════════════════════════════╗\n║(1) Afrique                         ║\n║(2) Europe                          ║     \n║(3) Amérique                        ║\n║(4) Asie                            ║\n║(5) Revenir en arrière              ║\n╚════════════════════════════════════╝\n";
         return readChoice(msg, 5, player);
     }
 
@@ -423,7 +426,7 @@ class AsciiGuessr extends Program {
             for(int j = 0; j < 3; j++) {
                 cursor(2,90+j);
                 print('.');
-                delay(500);
+                delay(400);
             }
         }
     }
@@ -484,68 +487,75 @@ class AsciiGuessr extends Program {
     }
 
     // Fonction qui lance une session de jeu
-    void startGame(Continent continent, Player player, Mode mode) {
+    void startGame(Continent continent, Player[] players, Mode mode) {
         String[] countryRandomly;
         String msg = "";
         String msgChoiceCountry = "";
-        int ptsBase = 0;
+        // Nombre de pts selon la difficulté de localisation de chaque pays trouvé
+        int ptsDifficulty;
         int alea;
         int country;
         int pts = 0;
         int foundCountries = 0;
         int[] drawnCountries = new int[continent.nbCountries];
         int actualIdx = 0;
-
+        int indexContinent = getIndex(continent.name);
+        // Pour le mode multi (1v1)
+        int playerNumber = 0;
+        
         printLoadingScreen();
         refreshScreenWithCoords(1,1);
 
-        for(int i = 0; i < 10; i++) {
-            msg = toString(continent, pts, foundCountries, continent.nbCountries,10-i) + "\n" + msgChoiceCountry;
+        for(int i = 0; i < 10; i++) {       
+            // C'est une condition ternaire pour vérifier si l'on affiche l'accumumulation des pts sur un seul joueur (mode solo) où si l'on affiche les pts selon le joueur (mode 1v1)
+            msg = toString(continent, (mode == mode.SOLO ? pts : players[playerNumber].pts[indexContinent]), foundCountries, continent.nbCountries,10-i) + "\n" + msgChoiceCountry;
+
             alea = drawACountry(continent.nbCountries, drawnCountries, actualIdx);
             actualIdx++;
             countryRandomly = searchCountry(continent, alea);
+
             msg += "\nOù se trouve ce pays: " + countryRandomly[0];
-            country = readChoice(msg, continent.nbCountries, player);
-                
+            country = readChoice(msg, continent.nbCountries, players[playerNumber]);
+
             if(country == alea) {
                 foundCountries++;
-                ptsBase = pts;
-                pts = getNewPts(countryRandomly[1], pts);
-                msgChoiceCountry = ANSI_GREEN + "Correct ! (+" + (pts-ptsBase) + "pts)" + ANSI_RESET;
+                ptsDifficulty = getPtsByDifficulty(countryRandomly[1]);
+
+                // Accumuler les pts d'un seul joueur si c'est le mode solo ou de chaque joueur (au tour par tour) si c'est le mode multi (1v1)
+                if(mode == mode.SOLO) {
+                    pts += ptsDifficulty;
+                } else {
+                    players[playerNumber].pts[indexContinent] = players[playerNumber].pts[indexContinent] + ptsDifficulty;
+                }
+                
+                msgChoiceCountry = ANSI_GREEN + "Correct ! (+" + ptsDifficulty + "pts)" + ANSI_RESET;
             } else {
                 msgChoiceCountry = ANSI_RED + "Incorrect ! (+0pts)" + ANSI_RESET + " | La réponse correcte était: " + ANSI_UNDERLINE + ANSI_CYAN + alea + ANSI_RESET;
             }
+
+            // Afficher du nom du joueur (tour par tour) pour le mode multi (1v1)
+            if(mode == mode.MULTI) {
+                playerNumber = playerNumber == 1 ? 0 : 1;
+            } 
         }
-        setPts(player, getIndex(continent.name), pts);
         if(mode == Mode.SOLO) {
-            save(player);
+            setPts(players[0], indexContinent, pts);
+            save(players[0]);
         }
     }
 
     // Fonction qui lance le mode 1v1 (en utilisant la fonction startGame qui va lancer une session de jeu pour chaque joueur)
-    void multiGame(Player player, Player player2) {
+    void multiGame(Player[] players) {
         String msg;
         int alea_continent = (int)(random()*4)+1;
 
-        refreshScreenWithCoords(2,70);
-        print("C'est au tour de: " + ANSI_BLUE_BG + ANSI_BLACK +  player.name + ANSI_RESET);
-        delay(2000);
-
         refreshScreenWithCoords(1,1);
-        startGame(newContinent(alea_continent), player, Mode.MULTI);
+        startGame(newContinent(alea_continent), players, Mode.MULTI);
         
-        refreshScreenWithCoords(2,70);
-        print("C'est au tour de " + ANSI_BLUE_BG + ANSI_BLACK + player2.name + ANSI_RESET);
-        delay(2000);
-
-        refreshScreenWithCoords(1,1);
-        startGame(newContinent(alea_continent), player2, Mode.MULTI);
-        refreshScreenWithCoords(1,1);
-
-        if(player.pts[alea_continent-1] > player2.pts[alea_continent-1]) {
-            msg = "Le vainqueur est... " + ANSI_GREEN + player.name +  ANSI_RESET + " !";
-        } else if(player.pts[alea_continent-1] < player2.pts[alea_continent-1]) {
-            msg = "Le vainqueur est... " + ANSI_GREEN + player2.name + ANSI_RESET + " !";
+        if(players[0].pts[alea_continent-1] > players[1].pts[alea_continent-1]) {
+            msg = "Le vainqueur est... " + ANSI_GREEN + players[0].name +  ANSI_RESET + " !";
+        } else if(players[0].pts[alea_continent-1] < players[1].pts[alea_continent-1]) {
+            msg = "Le vainqueur est... " + ANSI_GREEN + players[1].name + ANSI_RESET + " !";
         } else {
             msg = "Les joueurs sont à égalité !";
         }
@@ -553,7 +563,7 @@ class AsciiGuessr extends Program {
         cursor(3,50);
         printCharByChar(msg, 60);
         println(msg);
-        println("---\n=> " + player.name + " | " + ANSI_BLUE + player.pts[alea_continent-1] + ANSI_RESET + " pts\n=> " + player2.name + " | " + ANSI_BLUE + player2.pts[alea_continent-1] + ANSI_RESET + " pts");
+        println("---\n=> " + players[0].name + " | " + ANSI_BLUE + players[0].pts[alea_continent-1] + ANSI_RESET + " pts\n=> " + players[1].name + " | " + ANSI_BLUE + players[1].pts[alea_continent-1] + ANSI_RESET + " pts");
     }
 
     // --------------------------------------
@@ -571,10 +581,10 @@ class AsciiGuessr extends Program {
         assertEquals(3, getIndex(ContinentName.ASIA));
     }
 
-    void testGetNewPts() {
-        assertEquals(20, getNewPts("1", 10));
-        assertEquals(110, getNewPts("2", 10));
-        assertEquals(1010, getNewPts("3", 10));
+    void testGetPtsByDifficulty() {
+        assertEquals(10, getPtsByDifficulty("1"));
+        assertEquals(100, getPtsByDifficulty("2"));
+        assertEquals(1000, getPtsByDifficulty("3"));
     }
 
     void testIsInArray() {
@@ -628,40 +638,44 @@ class AsciiGuessr extends Program {
     void algorithm() {
         int choice = -1;
         boolean trouve = false;
-        Player player = null;
+        Player connectedPlayer = null;
+        // Permet de gérer le cas ou il y a plusieurs joueurs (le mode 1v1) lors d'une session de jeu
+        Player[] players = null;
         
         while(!trouve) {
             // Menu principal
             if(choice == -1) {
-                choice = menu(Menu.GAME, player);
+                choice = menu(Menu.GAME, connectedPlayer);
             }
 
             if(choice == 1) {
                 // Mode 1v1
-                multiGame(newPlayer(askNickname()), newPlayer(askNickname()));
+                players = new Player[]{newPlayer(askNickname()), newPlayer(askNickname())};
+                multiGame(players);
                 choice = readChoice("\n(1) Recommencer une partie\n(2) Revenir au menu principal\n", 2, null);
                 if(choice == 2) {
                     choice = -1;
                 }
             } else if(choice == 2) { // Se connecter
-                if(player == null) {
-                    player = newPlayer(askNickname());
-                    authenticate(player);
+                if(connectedPlayer == null) {
+                    connectedPlayer = newPlayer(askNickname());
+                    authenticate(connectedPlayer);
                 }
                 // Menu du joueur
-                choice = menu(Menu.PLAYER, player);
+                choice = menu(Menu.PLAYER, connectedPlayer);
                 
                 if(choice == 1) { // Commencer une partie
-                    choice = menu(Menu.CONTINENTS, player);
+                    choice = menu(Menu.CONTINENTS, connectedPlayer);
                     if(choice != 5) {
-                        startGame(newContinent(choice), player, Mode.SOLO);
+                        players = new Player[]{connectedPlayer};
+                        startGame(newContinent(choice), players, Mode.SOLO);
                     }
                     // Pour revenir au menu du joueur après que la partie soit terminé ou si l'on est revenu en arrière
                     choice = 2;
                 } else if(choice == 2) { // Consulter le classement des joueurs
-                    choice = ranking(player);
+                    choice = ranking(connectedPlayer);
                 } else if(choice == 3) { // Se déconnecter
-                    player = null;
+                    connectedPlayer = null;
                     choice = -1;
                 } else { // Quitter
                     trouve = true;
