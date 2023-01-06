@@ -6,7 +6,7 @@ Contacts : <karim.aouladtayab.etu@univ-lille.fr> , <nassim.boukebout@univ-lille.
 
 ## Présentation de AsciiGuessr
 
-> Pour un affichage complet, vous pouvez mettre le terminal en plein écran avec la touche F11.
+> Pour un affichage complet, vous pouvez dezoomer et mettre le terminal en plein écran avec la touche F11.
 
 AsciiGuessr est un jeu ludo-pédagogique en mode ASCII dans lequel on doit deviner les pays du monde selon 4 continents (Europe,Afrique,Amérique,Asie), ce jeu offre plusieurs fonctionnalités tels que:
 - **Le mode classique (solo)**: Le joueur choisit une continent parmi les 4 et tente de deviner le plus de pays parmi les 10 pays choisis aléatoirement (pour cela il a à sa disposition le continent affiché en ASCII et chaque pays numéroté et le joueur doit les localiser en entrant un nombre).
